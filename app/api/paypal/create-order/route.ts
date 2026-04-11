@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
       customer,
       shippingAddress,
       items,
-      total: frontendTotal, // ✅ rename for clarity
       shippingCost = 0,
     } = body;
 
@@ -23,11 +22,9 @@ export async function POST(req: NextRequest) {
       customer,
       shippingAddress,
       items,
-      frontendTotal,
       shippingCost,
     });
 
-    // ❌ Validate items
     if (!items || items.length === 0) {
       return NextResponse.json(
         { error: "No items provided" },
@@ -35,33 +32,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Calculate backend totals (SOURCE OF TRUTH)
+    // ✅ SAFE CALCULATION
     const itemsTotal = items.reduce(
-      (acc, item) => acc + Number(item.price) * Number(item.quantity),
+      (acc, item) =>
+        acc + Number(item.price || 0) * Number(item.quantity || 0),
       0
     );
 
-    const calculatedTotal = itemsTotal + Number(shippingCost || 0);
+    const shipping = Number(shippingCost || 0);
+    const calculatedTotal = itemsTotal + shipping;
 
-    console.log("💰 TOTAL CHECK:", {
+    console.log("💰 SERVER TOTAL:", {
       itemsTotal,
-      shippingCost,
-      frontendTotal,
-      backendTotal: calculatedTotal,
+      shipping,
+      calculatedTotal,
     });
 
-    // ⚠️ LOG mismatch but DON'T BLOCK
-    if (
-      typeof frontendTotal === "number" &&
-      Math.abs(calculatedTotal - frontendTotal) > 0.01
-    ) {
-      console.warn("⚠️ Total mismatch detected (IGNORED)", {
-        frontendTotal,
-        backendTotal: calculatedTotal,
-      });
-    }
-
-    // 💳 Create PayPal order
+    // 💳 PAYPAL ORDER
     const request = new paypal.orders.OrdersCreateRequest();
 
     request.requestBody({
@@ -72,6 +59,7 @@ export async function POST(req: NextRequest) {
             currency_code: "USD",
             value: calculatedTotal.toFixed(2),
 
+            // ✅ FULL BREAKDOWN (fixes TS + PayPal validation)
             breakdown: {
               item_total: {
                 currency_code: "USD",
@@ -79,7 +67,7 @@ export async function POST(req: NextRequest) {
               },
               shipping: {
                 currency_code: "USD",
-                value: Number(shippingCost).toFixed(2),
+                value: shipping.toFixed(2),
               },
               tax_total: {
                 currency_code: "USD",
@@ -110,12 +98,12 @@ export async function POST(req: NextRequest) {
 
     const paypalOrder = await paypalClient.execute(request);
 
-    // 💾 Save order in DB
+    // 💾 SAVE ORDER
     const newOrder = await Order.create({
       customer,
       shippingAddress,
       items,
-      total: calculatedTotal, // ✅ always backend total
+      total: calculatedTotal,
       paymentMethod: "paypal",
       paymentDetails: paypalOrder.result,
       status: "pending",
@@ -125,6 +113,7 @@ export async function POST(req: NextRequest) {
       success: true,
       paypalOrderId: paypalOrder.result.id,
       orderId: newOrder._id,
+      backendTotal: calculatedTotal,
     });
   } catch (error: any) {
     console.error("❌ PayPal Create Order Error:", error);
