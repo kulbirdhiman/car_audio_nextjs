@@ -1,6 +1,8 @@
 "use client";
 
 import PayPalButton from "./payment/PayPalButton";
+import AfterPayButton from "./payment/AfterPayButton";
+import ZipPayButton from "./payment/ZipPayButton";
 import PaymentCard from "./PaymentCard";
 
 type Props = {
@@ -12,7 +14,7 @@ type Props = {
 };
 
 export default function PaymentMethod({
-  paymentMethod, 
+  paymentMethod,
   setPaymentMethod,
   total,
   formData,
@@ -20,7 +22,6 @@ export default function PaymentMethod({
 }: Props) {
   return (
     <section className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-sm font-bold text-white">
@@ -37,7 +38,7 @@ export default function PaymentMethod({
       </div>
 
       {/* Payment Options */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <PaymentCard
           value="card"
           selected={paymentMethod}
@@ -53,13 +54,52 @@ export default function PaymentMethod({
           title="PayPal"
           subtitle="Pay securely using PayPal"
         />
+
+        <PaymentCard
+          value="afterpay"
+          selected={paymentMethod}
+          onChange={setPaymentMethod}
+          title="Afterpay"
+          subtitle="Pay in 4 installments"
+        />
+
+        {/* ✅ ZipPay */}
+        <PaymentCard
+          value="zippay"
+          selected={paymentMethod}
+          onChange={setPaymentMethod}
+          title="ZipPay"
+          subtitle="Buy now, pay later"
+        />
       </div>
 
-      {/* ✅ PayPal Button */}
+      {/* PayPal */}
       {paymentMethod === "paypal" && (
         <div className="mt-6">
           <PayPalButton
-           shippingCost={0}
+            shippingCost={0}
+            total={total}
+            formData={formData}
+            cartItems={cartItems}
+          />
+        </div>
+      )}
+
+      {/* Afterpay */}
+      {paymentMethod === "afterpay" && (
+        <div className="mt-6">
+          <AfterPayButton
+            total={total}
+            formData={formData}
+            cartItems={cartItems}
+          />
+        </div>
+      )}
+
+      {/* ZipPay */}
+      {paymentMethod === "zippay" && (
+        <div className="mt-6">
+          <ZipPayButton
             total={total}
             formData={formData}
             cartItems={cartItems}
