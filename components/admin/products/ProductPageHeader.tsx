@@ -1,3 +1,5 @@
+import DownloadProductsButton from "@/components/products/DownloadProductsButton";
+
 type Props = {
   title?: string;
   description?: string;
@@ -20,7 +22,8 @@ const ProductPageHeader = ({
         </p>
       </div>
 
-      {actionLabel && onAction && (
+      <div className="flex gap-2" >
+        {actionLabel && onAction && (
         <button
           onClick={onAction}
           className="inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90 dark:bg-white dark:text-black"
@@ -28,6 +31,8 @@ const ProductPageHeader = ({
           {actionLabel}
         </button>
       )}
+      <DownloadProductsButton />
+      </div>
     </div>
   );
 };
