@@ -10,7 +10,9 @@ interface Params {
 
 export async function GET(req: Request, { params }: Params) {
   const { id } = await params;
+  console.log(id , "this is id `")
   return getProductByIdController(req, id);
+
 }
 
 export async function PUT(req: Request, { params }: Params) {

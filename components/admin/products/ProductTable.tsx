@@ -99,11 +99,10 @@ const ProductTable = ({
 
                   <td className="px-4 py-4">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                        product.isActive
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      }`}
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${product.isActive
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
                     >
                       {product.isActive ? "Active" : "Inactive"}
                     </span>
@@ -111,6 +110,16 @@ const ProductTable = ({
 
                   <td className="px-4 py-4">
                     <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          const url = `https://car-audio-nextjs.vercel.app/product/${product._id}`;
+                          navigator.clipboard.writeText(url);
+                          alert("Link copied!");
+                        }}
+                        className="rounded-lg bg-gray-800 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-900"
+                      >
+                        Copy Link
+                      </button>
                       <button
                         onClick={() => onEdit(product)}
                         className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"

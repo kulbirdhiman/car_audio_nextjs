@@ -13,7 +13,7 @@ export function proxy(req: NextRequest) {
   // If logged in, don't allow login/register
   if (isAuthPage && user) {
     if (user.role === "admin") {                                     
-      return NextResponse.redirect(new URL("/admin", req.url));
+      return NextResponse.redirect(new URL("/admin/car-companies", req.url));
     }
     return NextResponse.redirect(new URL("/users", req.url));
   }

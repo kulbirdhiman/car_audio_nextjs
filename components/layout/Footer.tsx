@@ -18,7 +18,7 @@ const companyLinks = [
   { label: "About Us", href: "/about-us" },
   { label: "Contact Us", href: "/contact-us" },
   { label: "Shipping Policy", href: "/shipping-policy" },
-  { label: "Return Policy", href: "/return-policy" },
+  { label: "Terms and Conditions", href: "/return-policy" },
   { label: "Privacy Policy", href: "/privacy-policy" },
 ];
 
