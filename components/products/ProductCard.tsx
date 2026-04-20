@@ -9,8 +9,8 @@ type Props = {
 
 const ProductCard = ({ product }: Props) => {
   const image =
-    product?.images?.[0]?.image
-      ? `${process.env.NEXT_PUBLIC_S3_IMG_URL}/${product.images[0].image}`
+    product?.images?.[0]
+      ? `${product.images[0]}`
       : "/placeholder.png";
 
   const salePrice = Number(product?.salePrice || 0);
@@ -78,7 +78,7 @@ const ProductCard = ({ product }: Props) => {
 
         <div className="mt-4 flex gap-2">
           <Link
-            href={`/products/${product?.slug || product?._id}`}
+            href={`/product/${product?.slug || product?._id}`}
             className="flex-1 rounded-xl border border-slate-300 px-4 py-2 text-center text-sm font-medium transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             View Details

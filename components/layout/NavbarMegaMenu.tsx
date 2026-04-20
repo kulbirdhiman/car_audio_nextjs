@@ -236,7 +236,7 @@ export default function NavbarMegaMenuApple() {
         {/* Right Side */}
         <div className="flex min-w-[120px] items-center justify-end gap-2">
           <Link
-            href="/account"
+            href="/admin"
             className="hidden rounded-full p-2 text-black/80 transition hover:bg-black/[0.05] dark:text-white/85 dark:hover:bg-white/10 lg:inline-flex"
           >
             <User className="h-4 w-4" />
@@ -424,7 +424,7 @@ export default function NavbarMegaMenuApple() {
         <div className="border-t border-black/5 bg-white/95 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/95 lg:hidden">
           <div className="space-y-3">
             <Link
-              href="/account"
+              href="/admin"
               className="flex items-center gap-2 rounded-2xl bg-black/[0.03] px-4 py-3 text-sm font-medium text-black/80 dark:bg-white/[0.04] dark:text-white/85"
             >
               <User className="h-4 w-4" />
