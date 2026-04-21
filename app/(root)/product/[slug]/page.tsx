@@ -40,6 +40,7 @@ type ProductType = {
 
 async function getProduct(slug: string): Promise<ProductType | null> {
   try {
+    console.log(slug , "this is slug")
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_ADDRESS}/products/slug/${slug}`,
       {
@@ -67,7 +68,8 @@ export default async function ProductDetailsPage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
+  const { slug } = await params;
+  console.log(slug , "this is slugsdsadsa")
   const product = await getProduct(slug);
 
   if (!product) {

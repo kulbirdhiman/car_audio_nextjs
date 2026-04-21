@@ -1,15 +1,12 @@
+import { NextRequest } from "next/server";
 import { getProductBySlugController } from "@/controllers/product.controller";
 
-interface Params {
-  params: {
-    slug: string;
-  };
-}
-
-export async function GET(req: Request, { params }: Params) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   try {
-
-    const { slug } =await params; // ✅ NO await
+    const { slug } = await params; // ✅ correct
 
     return getProductBySlugController(req, slug);
   } catch (error: any) {
