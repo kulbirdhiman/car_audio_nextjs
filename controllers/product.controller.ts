@@ -482,7 +482,51 @@ export async function deleteProductController(_req: Request, id: string) {
   } catch (error: any) {
     return errorResponse(error?.message || "Failed to delete product", 500);
   }
-}export async function bulkUpdateProductsController(req: Request) {
+}
+
+export async function getProductBySlugController(
+  _req: Request,
+  slug: string
+) {
+  try {
+    await connectDB();
+
+    console.log(slug, "this is slug");
+
+    // ✅ Validation
+    if (!slug || typeof slug !== "string") {
+      return errorResponse("Invalid slug", 400);
+    }
+
+    // ✅ Query
+    const product = await Product.findOne({
+      slug: slug.toLowerCase(),
+    })
+      .populate("departmentId", "name slug")
+      .populate("companyId", "name slug")
+      .populate("modelId", "name slug")
+      .populate("subModelId", "name slug")
+      .lean();
+
+    // ✅ Not found
+    if (!product) {
+      return errorResponse("Product not found", 404);
+    }
+
+    // ✅ Success
+    return successResponse(product, "Product fetched successfully");
+  } catch (error: any) {
+    console.error("GET PRODUCT ERROR:", error);
+
+    return errorResponse(
+      error?.message || "Failed to fetch product",
+      500
+    );
+  }
+}
+
+
+export async function bulkUpdateProductsController(req: Request) {
   try {
     await connectDB();
 
