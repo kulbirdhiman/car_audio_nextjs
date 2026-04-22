@@ -532,7 +532,7 @@ export async function bulkUpdateProductsController(req: Request) {
 
     const body = await req.json();
     const { ids, updateData } = body;
-
+    console.log(ids , updateData , "this is ")
     // ✅ Validation
     if (!Array.isArray(ids) || ids.length === 0) {
       return errorResponse("Invalid product IDs", 400);
