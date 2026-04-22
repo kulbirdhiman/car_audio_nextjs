@@ -44,7 +44,7 @@ export const productsApi = apiSlice.injectEndpoints({
     }),
 
     createProduct: builder.mutation({
-      query: (body) => ({ 
+      query: (body) => ({
         url: "/products",
         method: "POST",
         body,
@@ -63,6 +63,16 @@ export const productsApi = apiSlice.injectEndpoints({
         { type: "Products", id: arg.id },
       ],
     }),
+    bulkUpdateProducts: builder.mutation({
+      query: ({ ids, updateData }) => ({
+        url: "/products/bulk-update",
+        method: "PUT",
+        body: { ids, updateData },
+      }),
+
+      // 🔥 important for UI refresh
+      invalidatesTags: ["Products"],
+    }),
 
     deleteProduct: builder.mutation({
       query: (id: string) => ({
@@ -80,4 +90,5 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useBulkUpdateProductsMutation
 } = productsApi;

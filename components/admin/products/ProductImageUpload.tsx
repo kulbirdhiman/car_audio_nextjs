@@ -45,6 +45,7 @@ const SortableItem = ({
   handleColorChange,
   errors,
   fieldName,
+  setPreviewImage,
 }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: item.image });
@@ -61,15 +62,18 @@ const SortableItem = ({
     : "";
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style}>
       <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-slate-900">
+
+        {/* ✅ IMAGE CLICK FOR PREVIEW */}
         {item.image ? (
           <Image
             src={imageSrc}
             alt={`Uploaded ${index + 1}`}
             width={300}
             height={200}
-            className="h-28 w-full object-cover"
+            onClick={() => setPreviewImage(imageSrc)}
+            className="h-28 w-full object-cover cursor-pointer"
           />
         ) : (
           <div className="flex h-28 items-center justify-center text-sm text-gray-400">
@@ -77,6 +81,7 @@ const SortableItem = ({
           </div>
         )}
 
+        {/* ❌ REMOVE BUTTON */}
         <button
           type="button"
           onClick={() => removeImage(index)}
@@ -85,6 +90,16 @@ const SortableItem = ({
           ×
         </button>
 
+        {/* 🔄 DRAG HANDLE (optional improvement) */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute left-2 top-2 cursor-grab text-xs bg-black/50 text-white px-2 py-1 rounded"
+        >
+          Drag
+        </div>
+
+        {/* 🎨 COLOR INPUT */}
         {values?.is_color === "1" && (
           <div className="p-2">
             <input
@@ -115,10 +130,12 @@ const UploadImage = ({
   setValues,
   customClass,
   errors,
+  deleteFiles,
   setDeleteFiles,
   fieldName,
 }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const imageBaseUrl = useMemo(() => {
     const envUrl = process.env.NEXT_PUBLIC_S3_IMG_URL || "";
@@ -126,6 +143,7 @@ const UploadImage = ({
     return envUrl.endsWith("/") ? envUrl : `${envUrl}/`;
   }, []);
 
+  /* ================= UPLOAD ================= */
   const uploadSingleImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -182,11 +200,15 @@ const UploadImage = ({
     }
   };
 
+  /* ================= REMOVE ================= */
   const removeImage = (index: number) => {
     const current = values?.[fieldName]?.[index]?.image;
 
     if (current) {
-      setDeleteFiles((prev) => [...prev, current]);
+      setDeleteFiles((prev) => {
+        if (prev.includes(current)) return prev;
+        return [...prev, current];
+      });
     }
 
     setValues((prev: any) => ({
@@ -195,6 +217,7 @@ const UploadImage = ({
     }));
   };
 
+  /* ================= COLOR ================= */
   const handleColorChange = (index: number, color: string) => {
     setValues((prev: any) => {
       const updated = [...prev[fieldName]];
@@ -203,6 +226,7 @@ const UploadImage = ({
     });
   };
 
+  /* ================= DRAG ================= */
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -226,6 +250,7 @@ const UploadImage = ({
   return (
     <div className={customClass || ""}>
       <div className="rounded-2xl border border-dashed p-4">
+
         <input
           type="file"
           multiple
@@ -234,7 +259,9 @@ const UploadImage = ({
           className="w-full"
         />
 
-        {isUploading && <p className="text-blue-500 mt-2">Uploading...</p>}
+        {isUploading && (
+          <p className="text-blue-500 mt-2">Uploading...</p>
+        )}
 
         {images.length > 0 && (
           <DndContext
@@ -242,7 +269,7 @@ const UploadImage = ({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={images.map((i:any) => i.image)}
+              items={images.map((i: any) => i.image)}
               strategy={rectSortingStrategy}
             >
               <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -257,6 +284,7 @@ const UploadImage = ({
                     handleColorChange={handleColorChange}
                     errors={errors}
                     fieldName={fieldName}
+                    setPreviewImage={setPreviewImage}
                   />
                 ))}
               </div>
@@ -264,6 +292,32 @@ const UploadImage = ({
           </DndContext>
         )}
       </div>
+
+      {/* ================= PREVIEW MODAL ================= */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="w-full max-h-[80vh] object-contain rounded-lg"
+            />
+
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

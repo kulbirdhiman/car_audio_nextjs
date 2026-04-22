@@ -482,44 +482,48 @@ export async function deleteProductController(_req: Request, id: string) {
   } catch (error: any) {
     return errorResponse(error?.message || "Failed to delete product", 500);
   }
-}
-
-export async function getProductBySlugController(
-  _req: Request,
-  slug: string
-) {
+}export async function bulkUpdateProductsController(req: Request) {
   try {
     await connectDB();
 
-    console.log(slug, "this is slug");
+    const body = await req.json();
+    const { ids, updateData } = body;
 
     // ✅ Validation
-    if (!slug || typeof slug !== "string") {
-      return errorResponse("Invalid slug", 400);
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return errorResponse("Invalid product IDs", 400);
     }
 
-    // ✅ Query
-    const product = await Product.findOne({
-      slug: slug.toLowerCase(),
-    })
-      .populate("departmentId", "name slug")
-      .populate("companyId", "name slug")
-      .populate("modelId", "name slug")
-      .populate("subModelId", "name slug")
-      .lean();
-
-    // ✅ Not found
-    if (!product) {
-      return errorResponse("Product not found", 404);
+    if (!updateData || typeof updateData !== "object") {
+      return errorResponse("Invalid update data", 400);
     }
 
-    // ✅ Success
-    return successResponse(product, "Product fetched successfully");
+    // ❗ Prevent updating restricted fields
+    const restrictedFields = ["slug", "sku", "_id"];
+    for (const key of Object.keys(updateData)) {
+      if (restrictedFields.includes(key)) {
+        return errorResponse(`Cannot update field: ${key}`, 400);
+      }
+    }
+
+    // ✅ Perform bulk update
+    const result = await Product.updateMany(
+      { _id: { $in: ids } },
+      { $set: updateData }
+    );
+
+    return successResponse(
+      {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+      },
+      "Bulk update successful"
+    );
   } catch (error: any) {
-    console.error("GET PRODUCT ERROR:", error);
+    console.error("BULK UPDATE ERROR:", error);
 
     return errorResponse(
-      error?.message || "Failed to fetch product",
+      error?.message || "Bulk update failed",
       500
     );
   }
