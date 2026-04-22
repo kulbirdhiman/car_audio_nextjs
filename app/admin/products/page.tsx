@@ -9,25 +9,35 @@ import { useGetSubModelsQuery } from "@/store/api/subModelsApi";
 import {
   useDeleteProductMutation,
   useGetProductsQuery,
+  useBulkUpdateProductsMutation,
 } from "@/store/api/productsApi";
 
 import ProductFilters from "@/components/admin/products/ProductFilters";
 import ProductPageHeader from "@/components/admin/products/ProductPageHeader";
 import ProductPagination from "@/components/admin/products/ProductPagination";
 import ProductTable from "@/components/admin/products/ProductTable";
+import BulkEditModal from "@/components/admin/products/BulkEditModal";
+
 import { ModelType, SubModelType } from "@/components/admin/products/types";
 
 const ProductsPage = () => {
   const router = useRouter();
 
+  // 🔍 Filters
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [modelFilter, setModelFilter] = useState("");
   const [subModelFilter, setSubModelFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+
+  // 📄 Pagination
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  // ✅ Bulk selection
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
 
   const {
     data: productsData,
@@ -72,6 +82,7 @@ const ProductsPage = () => {
   });
 
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+  const [bulkUpdateProducts] = useBulkUpdateProductsMutation();
 
   const products = productsData?.data?.result || [];
   const pagination = productsData?.data?.pagination;
@@ -81,6 +92,7 @@ const ProductsPage = () => {
   const allSubModels = subModelsData?.data?.result || [];
   const totalPages = pagination?.totalPages || 1;
 
+  // 🔁 Reset invalid model
   useEffect(() => {
     if (!companyFilter || !modelFilter) return;
 
@@ -92,6 +104,7 @@ const ProductsPage = () => {
     }
   }, [companyFilter, modelFilter, allModels]);
 
+  // 🔁 Reset invalid submodel
   useEffect(() => {
     if (!modelFilter || !subModelFilter) return;
 
@@ -104,8 +117,9 @@ const ProductsPage = () => {
     }
   }, [modelFilter, subModelFilter, allSubModels]);
 
+  // ❌ Delete
   const handleDelete = async (id: string) => {
-    const ok = window.confirm("Are you sure you want to delete this product?");
+    const ok = window.confirm("Delete this product?");
     if (!ok) return;
 
     try {
@@ -113,19 +127,65 @@ const ProductsPage = () => {
       refetch();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete product");
+    }
+  };
+
+  // ✅ Bulk update submit
+  const handleBulkUpdate = async (form: any) => {
+    const updateData: any = {};
+
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== "" && value !== null) {
+        updateData[key] = value;
+      }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      alert("Nothing to update");
+      return;
+    }
+
+    const ok = confirm(`Update ${selectedProducts.length} products?`);
+    if (!ok) return;
+
+    try {
+      await bulkUpdateProducts({
+        ids: selectedProducts,
+        updateData,
+      }).unwrap();
+
+      setSelectedProducts([]);
+      setShowBulkEdit(false);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      alert("Bulk update failed");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 text-gray-900 dark:bg-[#0b1120] dark:text-white md:p-6">
       <div className="mx-auto max-w-7xl">
+
         <ProductPageHeader
           title="Products"
           description="Manage products with clean separate pages"
           actionLabel="+ Create Product"
           onAction={() => router.push("/admin/products/create")}
         />
+
+        {/* ✅ Bulk Action Bar */}
+        {selectedProducts.length > 0 && (
+          <div className="mb-4 flex items-center justify-between rounded-lg bg-blue-100 p-3 dark:bg-blue-900">
+            <p>{selectedProducts.length} selected</p>
+            <button
+              onClick={() => setShowBulkEdit(true)}
+              className="rounded bg-blue-600 px-4 py-2 text-white"
+            >
+              Bulk Edit
+            </button>
+          </div>
+        )}
 
         <ProductFilters
           search={search}
@@ -153,7 +213,11 @@ const ProductsPage = () => {
           isLoading={isLoading}
           isFetching={isFetching}
           isDeleting={isDeleting}
-          onEdit={(product) => router.push(`/admin/products/edit/${product._id}`)}
+          selectedProducts={selectedProducts}
+          setSelectedProducts={setSelectedProducts}
+          onEdit={(product) =>
+            router.push(`/admin/products/edit/${product._id}`)
+          }
           onDelete={handleDelete}
         />
 
@@ -163,6 +227,16 @@ const ProductsPage = () => {
           onPrev={() => setPage((prev) => Math.max(prev - 1, 1))}
           onNext={() => setPage((prev) => Math.min(prev + 1, totalPages))}
         />
+
+        {/* ✅ Bulk Edit Modal */}
+        {showBulkEdit && (
+          <BulkEditModal
+            onClose={() => setShowBulkEdit(false)}
+            onSubmit={handleBulkUpdate}
+            departments={departments}
+            companies={companies}
+          />
+        )}
       </div>
     </div>
   );

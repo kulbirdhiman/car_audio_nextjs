@@ -524,3 +524,51 @@ export async function getProductBySlugController(
     );
   }
 }
+
+
+export async function bulkUpdateProductsController(req: Request) {
+  try {
+    await connectDB();
+
+    const body = await req.json();
+    const { ids, updateData } = body;
+
+    // ✅ Validation
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return errorResponse("Invalid product IDs", 400);
+    }
+
+    if (!updateData || typeof updateData !== "object") {
+      return errorResponse("Invalid update data", 400);
+    }
+
+    // ❗ Prevent updating restricted fields
+    const restrictedFields = ["slug", "sku", "_id"];
+    for (const key of Object.keys(updateData)) {
+      if (restrictedFields.includes(key)) {
+        return errorResponse(`Cannot update field: ${key}`, 400);
+      }
+    }
+
+    // ✅ Perform bulk update
+    const result = await Product.updateMany(
+      { _id: { $in: ids } },
+      { $set: updateData }
+    );
+
+    return successResponse(
+      {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+      },
+      "Bulk update successful"
+    );
+  } catch (error: any) {
+    console.error("BULK UPDATE ERROR:", error);
+
+    return errorResponse(
+      error?.message || "Bulk update failed",
+      500
+    );
+  }
+}

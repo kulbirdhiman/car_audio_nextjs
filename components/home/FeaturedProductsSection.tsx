@@ -1,7 +1,21 @@
 import Link from "next/link";
-import { featuredProducts } from "@/data/homeDummyData";
 
-export default function FeaturedProductsSection() {
+async function getProducts() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_ADDRESS}/home/featured-products?limit=4`, {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    console.error("API ERROR:", res.status);
+    return [];
+  }
+
+  const data = await res.json();
+  return data.data || [];
+}
+
+export default async function FeaturedProductsSection() {
+  const products = await getProducts();
   return (
     <section className="bg-gray-50 py-14 dark:bg-[#0f172a] md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
@@ -27,21 +41,23 @@ export default function FeaturedProductsSection() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-          {featuredProducts.map((item) => (
+          {products.map((item: any) => (
             <div
-              key={item.id}
+              key={item._id}
               className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-xl dark:border-gray-800 dark:bg-[#111827]"
             >
               <div className="relative h-60 overflow-hidden">
                 <img
-                  src={item.image}
+                  src={item?.images[0]}
                   alt={item.name}
                   className="h-full w-full object-cover"
                 />
 
-                <span className="absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-xs font-semibold text-white dark:bg-white dark:text-black">
-                  {item.badge}
-                </span>
+                {item.badge && (
+                  <span className="absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-xs font-semibold text-white dark:bg-white dark:text-black">
+                    {item.badge}
+                  </span>
+                )}
               </div>
 
               <div className="p-5">
@@ -53,14 +69,17 @@ export default function FeaturedProductsSection() {
                   <span className="text-xl font-extrabold text-gray-900 dark:text-white">
                     ${item.price}
                   </span>
-                  <span className="text-sm text-gray-400 line-through">
-                    ${item.oldPrice}
-                  </span>
+
+                  {item.oldPrice && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ${item.oldPrice}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-5 flex gap-3">
                   <Link
-                    href={item.link}
+                    href={`/product/${item.slug}`}
                     className="flex-1 rounded-2xl bg-black px-4 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90 dark:bg-white dark:text-black"
                   >
                     View Product
