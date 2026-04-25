@@ -36,13 +36,13 @@ export default function ShippingMethod({
           onClick={() => setShippingMethod("standard")}
         />
 
-        <ShippingCard
+        {/* <ShippingCard
           active={shippingMethod === "pickup"}
           title="Local Pickup"
           subtitle="Ready within 1-2 business days"
           price="Free"
           onClick={() => setShippingMethod("pickup")}
-        />
+        /> */}
       </div>
     </section>
   );
