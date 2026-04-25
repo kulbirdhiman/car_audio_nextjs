@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ProductItemType } from "./types";
 
 type Props = {
@@ -112,6 +113,7 @@ const ProductTable = ({
                       />
                     </td>
 
+                    {/* IMAGE */}
                     <td className="px-4 py-4">
                       {product.images?.[0] ? (
                         <img
@@ -126,8 +128,15 @@ const ProductTable = ({
                       )}
                     </td>
 
+                    {/* ✅ CLICKABLE NAME */}
                     <td className="px-4 py-4">
-                      <div className="font-semibold">{product.name}</div>
+                      <Link
+                        href={`/product/${product._id}`}
+                        className="font-semibold text-blue-600 hover:underline"
+                      >
+                        {product.name}
+                      </Link>
+
                       <div className="text-xs text-gray-500">
                         {product.slug}
                       </div>
@@ -155,6 +164,7 @@ const ProductTable = ({
                       </span>
                     </td>
 
+                    {/* ACTIONS */}
                     <td className="px-4 py-4">
                       <div className="flex gap-2 justify-center">
                         <button
