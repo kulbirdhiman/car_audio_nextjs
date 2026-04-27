@@ -51,35 +51,35 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
   const [formData, setFormData] = useState<any>(
     initialValues
       ? {
-          departmentId: initialValues.departmentId?._id || "",
-          companyId: initialValues.companyId?._id || "",
-          modelId: initialValues.modelId?._id || "",
-          subModelId: initialValues.subModelId?._id || "",
-          year: initialValues.year ? String(initialValues.year) : "",
-          name: initialValues.name || "",
-          sku: initialValues.sku || "",
-          price:
-            initialValues.price !== undefined ? String(initialValues.price) : "",
-          salePrice:
-            initialValues.salePrice !== undefined
-              ? String(initialValues.salePrice)
-              : "0",
-          stock:
-            initialValues.stock !== undefined
-              ? String(initialValues.stock)
-              : "0",
-          images: normalizeImages(initialValues.images),
-          shortDescription: initialValues.shortDescription || "",
-          description: initialValues.description || "",
-          isActive:
-            typeof initialValues.isActive === "boolean"
-              ? initialValues.isActive
-              : true,
-        }
+        departmentId: initialValues.departmentId?._id || "",
+        companyId: initialValues.companyId?._id || "",
+        modelId: initialValues.modelId?._id || "",
+        subModelId: initialValues.subModelId?._id || "",
+        year: initialValues.year ? String(initialValues.year) : "",
+        name: initialValues.name || "",
+        sku: initialValues.sku || "",
+        price:
+          initialValues.price !== undefined ? String(initialValues.price) : "",
+        salePrice:
+          initialValues.salePrice !== undefined
+            ? String(initialValues.salePrice)
+            : "0",
+        stock:
+          initialValues.stock !== undefined
+            ? String(initialValues.stock)
+            : "0",
+        images: normalizeImages(initialValues.images),
+        shortDescription: initialValues.shortDescription || "",
+        description: initialValues.description || "",
+        isActive:
+          typeof initialValues.isActive === "boolean"
+            ? initialValues.isActive
+            : true,
+      }
       : {
-          ...initialFormData,
-          images: [],
-        }
+        ...initialFormData,
+        images: [],
+      }
   );
 
   const { data: departmentsData } = useGetDepartmentsQuery({
@@ -139,7 +139,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     const { name, value } = e.target;
 
     if (name === "companyId") {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         companyId: value,
         modelId: "",
@@ -149,7 +149,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     }
 
     if (name === "modelId") {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         modelId: value,
         subModelId: "",
@@ -158,7 +158,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     }
 
     if (name === "isActive") {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         isActive: value === "true",
       }));
@@ -166,14 +166,14 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     }
 
     if (name === "sku") {
-      setFormData((prev:any) => ({
+      setFormData((prev: any) => ({
         ...prev,
         sku: value.toUpperCase(),
       }));
       return;
     }
 
-    setFormData((prev:any) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
     }));
@@ -183,7 +183,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     if (!formData.departmentId) return "Please select department";
     if (!formData.companyId) return "Please select company";
     if (!formData.modelId) return "Please select model";
-    if (!formData.year.trim()) return "Year is required";
+    // if (!formData.year.trim()) return "Year is required";
     if (!formData.name.trim()) return "Product name is required";
     if (!formData.sku.trim()) return "SKU is required";
     if (!formData.price.trim()) return "Price is required";
@@ -199,7 +199,9 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     companyId: formData.companyId,
     modelId: formData.modelId,
     subModelId: formData.subModelId || null,
-    year: Number(formData.year),
+    year: formData.year && !isNaN(Number(formData.year))
+      ? Number(formData.year)
+      : undefined,
     name: formData.name.trim(),
     sku: formData.sku.trim().toUpperCase(),
     price: Number(formData.price),
@@ -223,6 +225,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
     }
 
     try {
+      console.log(buildPayload())
       await onSubmit(buildPayload());
     } catch (error: any) {
       setFormError(
@@ -442,8 +445,8 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
           {isLoading
             ? "Please wait..."
             : mode === "edit"
-            ? "Update Product"
-            : "Create Product"}
+              ? "Update Product"
+              : "Create Product"}
         </button>
       </div>
     </form>

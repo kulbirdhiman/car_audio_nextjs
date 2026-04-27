@@ -10,7 +10,7 @@ type Props = {
   isDeleting: boolean;
   selectedProducts: string[];
   setSelectedProducts: (ids: string[]) => void;
-  onEdit: (product: ProductItemType) => void;
+  onEdit: (product: ProductItemType) => void; 
   onDelete: (id: string) => void;
 };
 

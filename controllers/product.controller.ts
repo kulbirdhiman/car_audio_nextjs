@@ -28,7 +28,16 @@ export async function createProductController(req: Request) {
     const modelId = body?.modelId?.trim?.() || body?.modelId;
     const subModelId = body?.subModelId?.trim?.() || body?.subModelId || null;
 
-    const year = Number(body?.year);
+    // const year = Number(body?.year);
+    let year;
+
+    if (body?.year !== undefined && body?.year !== "") {
+      const parsedYear = Number(body.year);
+
+      if (!Number.isNaN(parsedYear)) {
+        year = parsedYear;
+      }
+    }
     const name = body?.name?.trim();
     const sku = body?.sku?.trim()?.toUpperCase();
     const price = Number(body?.price);
@@ -66,9 +75,9 @@ export async function createProductController(req: Request) {
       return errorResponse("SKU is required", 400);
     }
 
-    if (!year || Number.isNaN(year)) {
-      return errorResponse("Valid year is required", 400);
-    }
+    // if (!year || Number.isNaN(year)) {
+    //   return errorResponse("Valid year is required", 400);
+    // }
 
     if (Number.isNaN(price)) {
       return errorResponse("Valid price is required", 400);
@@ -366,9 +375,9 @@ export async function updateProductController(req: Request, id: string) {
 
     if (body?.year !== undefined) {
       const year = Number(body.year);
-      if (Number.isNaN(year)) {
-        return errorResponse("Valid year is required", 400);
-      }
+      // if (Number.isNaN(year)) {
+      //   return errorResponse("Valid year is required", 400);
+      // }
       updateData.year = year;
     }
 
@@ -532,7 +541,7 @@ export async function bulkUpdateProductsController(req: Request) {
 
     const body = await req.json();
     const { ids, updateData } = body;
-    console.log(ids , updateData , "this is ")
+    console.log(ids, updateData, "this is ")
     // ✅ Validation
     if (!Array.isArray(ids) || ids.length === 0) {
       return errorResponse("Invalid product IDs", 400);
