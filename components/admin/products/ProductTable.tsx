@@ -131,7 +131,7 @@ const ProductTable = ({
                     {/* ✅ CLICKABLE NAME */}
                     <td className="px-4 py-4">
                       <Link
-                        href={`/product/${product._id}`}
+                        href={`/product/${product.slug}`}
                         className="font-semibold text-blue-600 hover:underline"
                       >
                         {product.name}
