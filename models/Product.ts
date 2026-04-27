@@ -37,7 +37,7 @@ const ProductSchema = new Schema<IProduct>(
     modelId: {
       type: Schema.Types.ObjectId,
       ref: "CarModel",
-      required: [true, "Model id is required"],
+      // required: [true, "Model id is required"],
       index: true,
     },
     subModelId: {
