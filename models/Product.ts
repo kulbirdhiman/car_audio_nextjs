@@ -48,10 +48,11 @@ const ProductSchema = new Schema<IProduct>(
     },
     year: {
       type: Number,
-      required: [true, "Year is required"],
-      min: [1950, "Year must be valid"],
-      max: [2100, "Year must be valid"],
-      index: true,
+      // required: [true, "Year is required"],
+      // min: [1950, "Year must be valid"],
+      // max: [2100, "Year must be valid"],
+      // index: true,
+      //   default: undefined
     },
     name: {
       type: String,
@@ -121,7 +122,7 @@ ProductSchema.index({
   companyId: 1,
   modelId: 1,
   subModelId: 1,
-  year: 1,
+  // year: 1,
   isActive: 1,
 });
 
