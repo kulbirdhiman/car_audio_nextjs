@@ -23,34 +23,43 @@ export async function createProductController(req: Request) {
 
     const body = await req.json();
 
-    const departmentId = body?.departmentId?.trim?.() || body?.departmentId;
-    const companyId = body?.companyId?.trim?.() || body?.companyId;
-    const modelId = body?.modelId?.trim?.() || body?.modelId;
-    const subModelId = body?.subModelId?.trim?.() || body?.subModelId || null;
+    // ✅ helper
+    const sanitizeObjectId = (value: any) => {
+      if (!value || value === "") return undefined;
+      return value;
+    };
 
-    // const year = Number(body?.year);
-    let year;
+    // ✅ sanitize IDs
+    const departmentId = sanitizeObjectId(body?.departmentId);
+    const companyId = sanitizeObjectId(body?.companyId);
+    const modelId = sanitizeObjectId(body?.modelId);
+    const subModelId = sanitizeObjectId(body?.subModelId);
 
+    // ✅ optional year
+    let year: number | undefined;
     if (body?.year !== undefined && body?.year !== "") {
       const parsedYear = Number(body.year);
-
       if (!Number.isNaN(parsedYear)) {
         year = parsedYear;
       }
     }
+
     const name = body?.name?.trim();
     const sku = body?.sku?.trim()?.toUpperCase();
     const price = Number(body?.price);
     const salePrice = Number(body?.salePrice || 0);
     const stock = Number(body?.stock || 0);
+
     const images = Array.isArray(body?.images)
-      ? body.images.filter((item: unknown) => typeof item === "string" && item.trim())
+      ? body.images.filter((item: any) => typeof item === "string" && item.trim())
       : [];
+
     const shortDescription = body?.shortDescription?.trim() || "";
     const description = body?.description?.trim() || "";
     const isActive =
       typeof body?.isActive === "boolean" ? body.isActive : true;
 
+    // ✅ REQUIRED validations
     if (!departmentId || !isValidObjectId(departmentId)) {
       return errorResponse("Valid department id is required", 400);
     }
@@ -59,25 +68,17 @@ export async function createProductController(req: Request) {
       return errorResponse("Valid company id is required", 400);
     }
 
-    if (!modelId || !isValidObjectId(modelId)) {
-      return errorResponse("Valid model id is required", 400);
+    // ✅ OPTIONAL validations
+    if (modelId && !isValidObjectId(modelId)) {
+      return errorResponse("Invalid model id", 400);
     }
 
     if (subModelId && !isValidObjectId(subModelId)) {
       return errorResponse("Invalid submodel id", 400);
     }
 
-    if (!name) {
-      return errorResponse("Product name is required", 400);
-    }
-
-    if (!sku) {
-      return errorResponse("SKU is required", 400);
-    }
-
-    // if (!year || Number.isNaN(year)) {
-    //   return errorResponse("Valid year is required", 400);
-    // }
+    if (!name) return errorResponse("Product name is required", 400);
+    if (!sku) return errorResponse("SKU is required", 400);
 
     if (Number.isNaN(price)) {
       return errorResponse("Valid price is required", 400);
@@ -91,36 +92,33 @@ export async function createProductController(req: Request) {
       return errorResponse("Valid stock is required", 400);
     }
 
-    const [department, company, model] = await Promise.all([
+    // ✅ fetch required relations
+    const [department, company] = await Promise.all([
       Department.findById(departmentId),
       CarCompany.findById(companyId),
-      CarModel.findById(modelId),
     ]);
 
-    if (!department) {
-      return errorResponse("Department not found", 404);
+    if (!department) return errorResponse("Department not found", 404);
+    if (!company) return errorResponse("Car company not found", 404);
+
+    // ✅ optional model fetch
+    let model = null;
+    if (modelId) {
+      model = await CarModel.findById(modelId);
+      if (!model) return errorResponse("Car model not found", 404);
+
+      if (model.companyId.toString() !== companyId) {
+        return errorResponse("Model does not belong to company", 400);
+      }
     }
 
-    if (!company) {
-      return errorResponse("Car company not found", 404);
-    }
-
-    if (!model) {
-      return errorResponse("Car model not found", 404);
-    }
-
-    if (model.companyId.toString() !== companyId) {
-      return errorResponse("Selected model does not belong to selected company", 400);
-    }
-
+    // ✅ optional submodel fetch
     if (subModelId) {
       const subModel = await SubModel.findById(subModelId);
-      if (!subModel) {
-        return errorResponse("Submodel not found", 404);
-      }
+      if (!subModel) return errorResponse("Submodel not found", 404);
 
-      if (subModel.modelId.toString() !== modelId) {
-        return errorResponse("Selected submodel does not belong to selected model", 400);
+      if (modelId && subModel.modelId.toString() !== modelId) {
+        return errorResponse("Submodel does not belong to model", 400);
       }
     }
 
@@ -128,7 +126,7 @@ export async function createProductController(req: Request) {
 
     const duplicateSlug = await Product.findOne({ slug });
     if (duplicateSlug) {
-      return errorResponse("Product slug already exists, change product name", 409);
+      return errorResponse("Product slug already exists", 409);
     }
 
     const duplicateSku = await Product.findOne({ sku });
@@ -136,12 +134,10 @@ export async function createProductController(req: Request) {
       return errorResponse("Product SKU already exists", 409);
     }
 
-    const product = await Product.create({
+    // ✅ build payload safely
+    const productData: any = {
       departmentId,
       companyId,
-      modelId,
-      subModelId,
-      year,
       name,
       slug,
       sku,
@@ -152,7 +148,13 @@ export async function createProductController(req: Request) {
       shortDescription,
       description,
       isActive,
-    });
+    };
+
+    if (modelId) productData.modelId = modelId;
+    if (subModelId) productData.subModelId = subModelId;
+    if (year !== undefined) productData.year = year;
+
+    const product = await Product.create(productData);
 
     const populatedProduct = await Product.findById(product._id)
       .populate("departmentId", "name slug")

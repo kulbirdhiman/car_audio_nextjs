@@ -182,7 +182,7 @@ const ProductForm = ({ mode, initialValues, onSubmit, isLoading }: Props) => {
   const validateForm = () => {
     if (!formData.departmentId) return "Please select department";
     if (!formData.companyId) return "Please select company";
-    if (!formData.modelId) return "Please select model";
+    // if (!formData.modelId) return "Please select model";
     // if (!formData.year.trim()) return "Year is required";
     if (!formData.name.trim()) return "Product name is required";
     if (!formData.sku.trim()) return "SKU is required";
