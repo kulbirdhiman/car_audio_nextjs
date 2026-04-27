@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { useGetDepartmentsQuery } from "@/store/api/departmentAPi";
 import { useGetCarCompaniesQuery } from "@/store/api/carCompaniesAPi";
 import { useGetCarModelsQuery } from "@/store/api/carModelAPi";
@@ -22,6 +23,16 @@ import { ModelType, SubModelType } from "@/components/admin/products/types";
 
 const ProductsPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // =========================
+  // 📌 URL STATE (SOURCE OF TRUTH)
+  // =========================
+  const urlPage = Number(searchParams.get("page") || 1);
+  const urlLimit = Number(searchParams.get("limit") || 25);
+
+  const [page, setPage] = useState(urlPage);
+  const [limit, setLimit] = useState(urlLimit);
 
   // 🔍 Filters
   const [search, setSearch] = useState("");
@@ -31,14 +42,36 @@ const ProductsPage = () => {
   const [subModelFilter, setSubModelFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
 
-  // 📄 Pagination
-  const [page, setPage] = useState(1);
-  const limit = 10;
-
   // ✅ Bulk selection
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
 
+  // =========================
+  // 🔄 SYNC URL → STATE
+  // =========================
+  useEffect(() => {
+    setPage(urlPage);
+  }, [urlPage]);
+
+  useEffect(() => {
+    setLimit(urlLimit);
+  }, [urlLimit]);
+
+  // =========================
+  // 🔁 UPDATE URL
+  // =========================
+  const updateQuery = (newPage: number, newLimit = limit) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("page", String(newPage));
+    params.set("limit", String(newLimit));
+
+    router.replace(`?${params.toString()}`);
+  };
+
+  // =========================
+  // 📡 API CALL
+  // =========================
   const {
     data: productsData,
     isLoading,
@@ -81,43 +114,23 @@ const ProductsPage = () => {
     modelId: modelFilter || undefined,
   });
 
-  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+  const [deleteProduct, { isLoading: isDeleting }] =
+    useDeleteProductMutation();
   const [bulkUpdateProducts] = useBulkUpdateProductsMutation();
 
   const products = productsData?.data?.result || [];
   const pagination = productsData?.data?.pagination;
+
   const departments = departmentsData?.data?.result || [];
   const companies = companiesData?.data?.result || [];
   const allModels = modelsData?.data?.result || [];
   const allSubModels = subModelsData?.data?.result || [];
+
   const totalPages = pagination?.totalPages || 1;
 
-  // 🔁 Reset invalid model
-  useEffect(() => {
-    if (!companyFilter || !modelFilter) return;
-
-    const exists = allModels.some((item: ModelType) => item._id === modelFilter);
-    if (!exists) {
-      setModelFilter("");
-      setSubModelFilter("");
-      setPage(1);
-    }
-  }, [companyFilter, modelFilter, allModels]);
-
-  // 🔁 Reset invalid submodel
-  useEffect(() => {
-    if (!modelFilter || !subModelFilter) return;
-
-    const exists = allSubModels.some(
-      (item: SubModelType) => item._id === subModelFilter
-    );
-    if (!exists) {
-      setSubModelFilter("");
-      setPage(1);
-    }
-  }, [modelFilter, subModelFilter, allSubModels]);
-
-  // ❌ Delete
+  // =========================
+  // ❌ DELETE
+  // =========================
   const handleDelete = async (id: string) => {
     const ok = window.confirm("Delete this product?");
     if (!ok) return;
@@ -130,7 +143,9 @@ const ProductsPage = () => {
     }
   };
 
-  // ✅ Bulk update submit
+  // =========================
+  // 📦 BULK UPDATE
+  // =========================
   const handleBulkUpdate = async (form: any) => {
     const updateData: any = {};
 
@@ -163,10 +178,12 @@ const ProductsPage = () => {
     }
   };
 
+  // =========================
+  // 🚀 RENDER
+  // =========================
   return (
     <div className="min-h-screen bg-gray-50 p-4 text-gray-900 dark:bg-[#0b1120] dark:text-white md:p-6">
       <div className="mx-auto max-w-7xl">
-
         <ProductPageHeader
           title="Products"
           description="Manage products with clean separate pages"
@@ -174,7 +191,7 @@ const ProductsPage = () => {
           onAction={() => router.push("/admin/products/create")}
         />
 
-        {/* ✅ Bulk Action Bar */}
+        {/* Bulk bar */}
         {selectedProducts.length > 0 && (
           <div className="mb-4 flex items-center justify-between rounded-lg bg-blue-100 p-3 dark:bg-blue-900">
             <p>{selectedProducts.length} selected</p>
@@ -186,6 +203,28 @@ const ProductsPage = () => {
             </button>
           </div>
         )}
+
+        {/* LIMIT SELECTOR */}
+        <div className="mb-4 flex items-center gap-3">
+          <label className="text-sm font-medium">Show:</label>
+
+          <select
+            value={limit}
+            onChange={(e) => {
+              const newLimit = Number(e.target.value);
+              setLimit(newLimit);
+              setPage(1);
+              updateQuery(1, newLimit);
+            }}
+            className="rounded border px-2 py-1 dark:bg-gray-800"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
 
         <ProductFilters
           search={search}
@@ -222,13 +261,21 @@ const ProductsPage = () => {
         />
 
         <ProductPagination
-          page={pagination?.page || 1}
+          page={page}
           totalPages={totalPages}
-          onPrev={() => setPage((prev) => Math.max(prev - 1, 1))}
-          onNext={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          onPrev={() => {
+            const newPage = Math.max(page - 1, 1);
+            setPage(newPage);
+            updateQuery(newPage);
+          }}
+          onNext={() => {
+            const newPage = Math.min(page + 1, totalPages);
+            setPage(newPage);
+            updateQuery(newPage);
+          }}
         />
 
-        {/* ✅ Bulk Edit Modal */}
+        {/* Bulk Modal */}
         {showBulkEdit && (
           <BulkEditModal
             onClose={() => setShowBulkEdit(false)}
