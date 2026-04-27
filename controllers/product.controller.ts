@@ -308,18 +308,33 @@ export async function updateProductController(req: Request, id: string) {
     const body = await req.json();
     const updateData: Record<string, any> = {};
 
+    // ✅ safe converter
+    const toStr = (val: any) => (val ? val.toString() : undefined);
+
     const nextDepartmentId =
-      body?.departmentId?.trim?.() || body?.departmentId || existingProduct.departmentId.toString();
+      body?.departmentId?.trim?.() ||
+      body?.departmentId ||
+      toStr(existingProduct.departmentId);
+
     const nextCompanyId =
-      body?.companyId?.trim?.() || body?.companyId || existingProduct.companyId.toString();
+      body?.companyId?.trim?.() ||
+      body?.companyId ||
+      toStr(existingProduct.companyId);
+
+    // ✅ MODEL ID is OPTIONAL now
     const nextModelId =
-      body?.modelId?.trim?.() || body?.modelId || existingProduct.modelId.toString();
+      body?.modelId !== undefined
+        ? body?.modelId?.trim?.() || body?.modelId || null
+        : toStr(existingProduct.modelId) || null;
+
     const nextSubModelId =
       body?.subModelId !== undefined
         ? body?.subModelId?.trim?.() || body?.subModelId || null
-        : existingProduct.subModelId
-          ? existingProduct.subModelId.toString()
-          : null;
+        : toStr(existingProduct.subModelId) || null;
+
+    // =========================
+    // VALIDATION
+    // =========================
 
     if (!isValidObjectId(nextDepartmentId)) {
       return errorResponse("Valid department id is required", 400);
@@ -329,18 +344,23 @@ export async function updateProductController(req: Request, id: string) {
       return errorResponse("Valid company id is required", 400);
     }
 
-    if (!isValidObjectId(nextModelId)) {
-      return errorResponse("Valid model id is required", 400);
+    // ✅ OPTIONAL modelId validation
+    if (nextModelId && !isValidObjectId(nextModelId)) {
+      return errorResponse("Invalid model id", 400);
     }
 
     if (nextSubModelId && !isValidObjectId(nextSubModelId)) {
       return errorResponse("Invalid submodel id", 400);
     }
 
+    // =========================
+    // FETCH DATA
+    // =========================
+
     const [department, company, model] = await Promise.all([
       Department.findById(nextDepartmentId),
       CarCompany.findById(nextCompanyId),
-      CarModel.findById(nextModelId),
+      nextModelId ? CarModel.findById(nextModelId) : null,
     ]);
 
     if (!department) {
@@ -351,35 +371,55 @@ export async function updateProductController(req: Request, id: string) {
       return errorResponse("Car company not found", 404);
     }
 
-    if (!model) {
+    // ✅ model optional check
+    if (nextModelId && !model) {
       return errorResponse("Car model not found", 404);
     }
 
-    if (model.companyId.toString() !== nextCompanyId) {
-      return errorResponse("Selected model does not belong to selected company", 400);
+    // =========================
+    // BUSINESS RULES
+    // =========================
+
+    if (nextModelId && model?.companyId?.toString() !== nextCompanyId) {
+      return errorResponse(
+        "Selected model does not belong to selected company",
+        400
+      );
     }
 
     if (nextSubModelId) {
       const subModel = await SubModel.findById(nextSubModelId);
+
       if (!subModel) {
         return errorResponse("Submodel not found", 404);
       }
 
-      if (subModel.modelId.toString() !== nextModelId) {
-        return errorResponse("Selected submodel does not belong to selected model", 400);
+      if (nextModelId && subModel.modelId.toString() !== nextModelId) {
+        return errorResponse(
+          "Selected submodel does not belong to selected model",
+          400
+        );
       }
     }
 
+    // =========================
+    // ASSIGN DATA
+    // =========================
+
     updateData.departmentId = nextDepartmentId;
     updateData.companyId = nextCompanyId;
-    updateData.modelId = nextModelId;
+    updateData.modelId = nextModelId; // can be null
     updateData.subModelId = nextSubModelId;
+
+    // =========================
+    // OPTIONAL FIELDS
+    // =========================
 
     if (body?.year !== undefined) {
       const year = Number(body.year);
-      // if (Number.isNaN(year)) {
-      //   return errorResponse("Valid year is required", 400);
-      // }
+      if (Number.isNaN(year)) {
+        return errorResponse("Valid year is required", 400);
+      }
       updateData.year = year;
     }
 
@@ -393,7 +433,10 @@ export async function updateProductController(req: Request, id: string) {
       });
 
       if (duplicateSlug) {
-        return errorResponse("Another product with this slug already exists", 409);
+        return errorResponse(
+          "Another product with this slug already exists",
+          409
+        );
       }
 
       updateData.name = nextName;
@@ -409,7 +452,10 @@ export async function updateProductController(req: Request, id: string) {
       });
 
       if (duplicateSku) {
-        return errorResponse("Another product with this SKU already exists", 409);
+        return errorResponse(
+          "Another product with this SKU already exists",
+          409
+        );
       }
 
       updateData.sku = nextSku;
@@ -457,6 +503,10 @@ export async function updateProductController(req: Request, id: string) {
       updateData.isActive = body.isActive;
     }
 
+    // =========================
+    // UPDATE PRODUCT
+    // =========================
+
     const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
@@ -471,10 +521,13 @@ export async function updateProductController(req: Request, id: string) {
     if (error instanceof mongoose.Error.ValidationError) {
       return errorResponse(error.message, 400);
     }
-    return errorResponse(error?.message || "Failed to update product", 500);
+
+    return errorResponse(
+      error?.message || "Failed to update product",
+      500
+    );
   }
 }
-
 export async function deleteProductController(_req: Request, id: string) {
   try {
     await connectDB();
