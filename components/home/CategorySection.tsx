@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { categories } from "@/data/homeDummyData";
+import Image from "next/image";
 
 export default function CategorySection() {
   return (
@@ -26,7 +27,9 @@ export default function CategorySection() {
               className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-800 dark:bg-[#111827]"
             >
               <div className="h-52 overflow-hidden">
-                <img
+                <Image
+                  height={200}
+                  width={300}
                   src={item.image}
                   alt={item.name}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

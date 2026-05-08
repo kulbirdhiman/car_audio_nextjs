@@ -27,31 +27,31 @@ export const categories = [
     name: "Android Head Units",
     description: "Smart infotainment systems for modern vehicles.",
     image:
-      "https://images.unsplash.com/photo-1489824904134-891ab64532f1?q=80&w=1200&auto=format&fit=crop",
-    link: "/products?department=android-head-units",
+      "/andriod.webp",
+    link: "/products?department=satnav-stereo",
   },
   {
     id: 2,
     name: "Digital Clusters",
     description: "Modern dashboard displays with premium styling.",
     image:
-      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop",
-    link: "/products?department=digital-clusters",
+      "/cluster.jpeg",
+    link: "/products?department=digital-cluster",
   },
   {
     id: 3,
     name: "Car Speakers",
     description: "Crystal-clear sound with powerful performance.",
     image:
-      "https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=1200&auto=format&fit=crop",
-    link: "/products?department=car-speakers",
+      "/spkear.webp",
+    link: "/products?department=audio-equipments",
   },
   {
     id: 4,
     name: "Accessories",
     description: "Everything you need to complete your setup.",
     image:
-      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=1200&auto=format&fit=crop",
+      "/WhatsApp Image 2026-05-08 at 4.19.51 PM.jpeg",
     link: "/products?department=accessories",
   },
 ];
